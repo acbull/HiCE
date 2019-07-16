@@ -305,8 +305,6 @@ if args.adapt:
             best_score = score
             with open(os.path.join(args.save_dir, 'meta_model.pt'), 'wb') as f:
                 torch.save(model_tmp, f)
-            with open(os.path.join(args.save_dir, 'meta_optimizer.pt'), 'wb') as f:
-                torch.save(optimizer.state_dict(), f)
         evaluate_on_chimera(model_tmp, chimera_data)
         # end with torch.no_grad():
         print('-' * 100)

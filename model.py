@@ -9,7 +9,7 @@ The code for transformer encoder is mostly modified from http://nlp.seas.harvard
 '''
 
 class LayerNorm(nn.Module):
-    "Construct a layernorm module (See citation for details)."
+    "Construct a layernorm module."
     def __init__(self, features, eps=1e-6):
         super(LayerNorm, self).__init__()
         self.a_2 = nn.Parameter(torch.ones(features))
