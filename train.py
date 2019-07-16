@@ -99,7 +99,6 @@ def evaluate_on_chimera(model, chimera_data):
     '''
         Evaluate the model on Chimera datasets
     '''
-    
     model.eval()
     with torch.no_grad():
         for k_shot in chimera_data:
@@ -200,7 +199,7 @@ for epoch in np.arange(args.n_epochs) + 1:
     loss_stat += [[epoch, li, 'TRAIN', k_shot] for (li, k_shot) in train_cosine]
     loss_stat += [[epoch, li, 'VALID', k_shot] for (li, k_shot) in valid_cosine]
     if epoch % args.test_interval == 0:
-        '''
+    '''
         # This script can plot loss curve and position attention weight for debugging.
         
         plot_stat = pd.DataFrame(loss_stat, columns=['Epoch', 'Cosine', 'Data', 'K-shot'])
@@ -211,7 +210,7 @@ for epoch in np.arange(args.n_epochs) + 1:
             sb.lineplot(x='Epoch', y='Cosine', hue='Data', data = data)
             plt.title('K-shot = ' + str(k))
             plt.savefig(args.save_dir + 'training_curve_%d.png' % k)
-        '''
+    '''
         evaluate_on_chimera(model, chimera_data)
     if optimizer.param_groups[0]['lr'] < args.lr_early_stop:
         print('Finish Training')
@@ -251,11 +250,14 @@ if args.adapt:
         meta_grads = []
         with tqdm(np.arange(args.meta_batch_size), desc='Meta Train') as monitor:
             for meta_batch in monitor:
+                '''
+                    Initialized from model, which will be learned to facilitate fast adaptation.
+                '''
                 model_tmp.load_state_dict(model.state_dict())
                 model_tmp.train()
                 optimizer_tmp = torch.optim.Adam(model_tmp.parameters(), lr = 5e-4)
                 '''
-                    Cumulate Inner Gradient
+                    Cumulate Inner Gradient on source corpus: \theta^* = \theta - \alpha \nabla_\theta \mathcal{L}_{D_T}(\theta)
                 '''
                 for inner_batch in range(args.inner_batch_size):
                     k_shot = np.random.randint(args.n_shot) + 1
@@ -266,6 +268,9 @@ if args.adapt:
                     loss = -F.cosine_similarity(pred_emb, source_train_targets).mean()
                     loss.backward()
                     optimizer_tmp.step()
+                '''
+                    Calculate the gradient with \theta^* on target corpus: \nabla_\theta \mathcal{L}_{D_N}(\theta^*)
+                '''
                 model_tmp.eval()
                 optimizer_tmp.zero_grad()
                 k_shot = np.random.randint(args.n_shot) + 1
@@ -278,7 +283,10 @@ if args.adapt:
             # end for meta_batch in tqdm:
         # end with tqdm(np.arange(args.meta_batch_size), desc='Meta Train') as monitor:
         '''
-            Meta-Update
+            Meta-Update with the average of meta gradients: \theta' = \theta - \beta \nabla_\theta \mathcal{L}_{D_N}(\theta^*)
+            Use replace_grad function as a hook to assign the gradients. Such operation will omit the second-order gradient, 
+            but some experiments show that this tradeoff will not sacrifice too much performance while gaining good efficiency.
+            (Also writing functional interface for a complex Transformer is very complicated).
         '''
         meta_grads = {name: torch.stack([name_grad[name] for name_grad in meta_grads]).mean(dim=0)
                                       for name in meta_grads[0].keys()}
@@ -288,15 +296,19 @@ if args.adapt:
                 hooks.append(
                     param.register_hook(replace_grad(meta_grads, name))
                 )
-
+        
         model.train()
         optimizer.zero_grad() 
         pred_emb = model.forward(target_train_contexts, target_train_vocabs) 
-        # Here the data (forwad, loss) doesn't matter at all, as the gradient will be replaced when "loss.backward()" with meta_grads
+        # Here the data (forwad, loss) doesn't matter at all, as the gradient will be replaced with meta_grads when "loss.backward()" is called.
         loss = -F.cosine_similarity(pred_emb, target_train_targets).mean()
         loss.backward()
         optimizer.step()
-
+        '''
+            After such optimization, the model will later serve as initialization for model_tmp, making it generalize to 
+            target corpus by only updating on source corpus.
+        '''
+        
         for h in hooks:
             h.remove()
             
@@ -327,7 +339,6 @@ if args.adapt:
             with open(os.path.join(args.save_dir, 'meta_model.pt'), 'wb') as f:
                 torch.save(model_tmp, f)
         evaluate_on_chimera(model_tmp, chimera_data)
-        # end with torch.no_grad():
         print('-' * 100)
         if optimizer.param_groups[0]['lr'] < args.lr_early_stop:
             print('Finish Training')
