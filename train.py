@@ -134,8 +134,13 @@ def replace_grad(parameter_gradients, parameter_name):
 
     return replace_grad_
 
-_vocab = {v: i+1 for v, i in zip('abcdefghijklmnopqrstuvwxyz', range(26))}
+'''
+    Use the same word embedding model as Nounce2vec and A la Carte for fair comparison. 
+    Note that during training, some of words in Wikitext-103 might not occur in this word embedding.
+'''
 base_w2v = Word2Vec.load(args.w2v_dir)
+
+_vocab = {v: i+1 for v, i in zip('abcdefghijklmnopqrstuvwxyz', range(26))}
 source_train_dataset, source_valid_dataset, dictionary = load_training_corpus(base_w2v, args.corpus_dir, \
      maxlen = args.maxlen, freq_lbound = args.freq_lbound, freq_ubound = args.freq_ubound, cxt_lbound = args.cxt_lbound)
 chimera_data = load_chimera(dictionary = dictionary, base_w2v = base_w2v, chimera_dir = args.chimera_dir)

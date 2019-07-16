@@ -81,10 +81,6 @@ class Dictionary(object):
         return [self.word2idx[w] if w in self.word2idx else 0 for w in x]
 
 def load_training_corpus(w2v, corpus_dir, maxlen = 12, pad = 0, freq_lbound = 16, freq_ubound = 2 ** 16, cxt_lbound = 2, dictionary = None):
-    '''
-        Use the same word embedding model as Nounce2vec and A la Carte for fair comparison. 
-        Note that during training, some of words in Wikitext-103 might not occur in this word embedding.
-    '''
     if dictionary == None:
         dictionary = Dictionary(w2v.vector_size)
     else:
