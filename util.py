@@ -7,22 +7,11 @@ from scipy.stats import spearmanr
 import pandas as pd
 from tqdm import tqdm
 
-def replace_grad(parameter_gradients, parameter_name):
-    """Creates a backward hook function that replaces the calculated gradient
-    with a precomputed value when .backward() is called.
-    
-    See
-    https://pytorch.org/docs/stable/autograd.html?highlight=hook#torch.Tensor.register_hook
-    for more info
-    """
-    def replace_grad_(module):
-        return parameter_gradients[parameter_name]
-
-    return replace_grad_
-
 def pad_sequences(sequences, maxlen=None, dtype='int32',
                   padding='pre', truncating='pre', value=0.):
-    # Directly adopted from keras.preprocessing
+    '''
+        Directly adopted from keras.preprocessing
+    '''
     num_samples = len(sequences)
     lengths = []
     for x in sequences:
@@ -92,8 +81,10 @@ class Dictionary(object):
         return [self.word2idx[w] if w in self.word2idx else 0 for w in x]
 
 def load_training_corpus(w2v, corpus_dir, maxlen = 12, pad = 0, freq_lbound = 16, freq_ubound = 2 ** 16, cxt_lbound = 2, dictionary = None):
-    # Use the same word embedding model as Nounce2vec and A la Carte for fair comparison. 
-    # Note that during training, some of words in Wikitext-103 might not occur in this word embedding.
+    '''
+        Use the same word embedding model as Nounce2vec and A la Carte for fair comparison. 
+        Note that during training, some of words in Wikitext-103 might not occur in this word embedding.
+    '''
     if dictionary == None:
         dictionary = Dictionary(w2v.vector_size)
     else:
@@ -117,9 +108,9 @@ def load_training_corpus(w2v, corpus_dir, maxlen = 12, pad = 0, freq_lbound = 16
             dictionary.add_word(word, w2v)
        
     '''
-    # test:
-    x = "I like playing basketball"
-    print(dictionary.idx2sent(dictionary.sent2idx(x)))
+        # test:
+        x = "I like playing basketball"
+        print(dictionary.idx2sent(dictionary.sent2idx(x)))
     '''
     freq = np.array([fi for fi in list(dictionary.word_count.values()) if fi > 0])
     remove_words = {}

@@ -12,7 +12,7 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser(description='Training HiCE on WikiText-103')
 
 '''
-Dataset arguments
+    Dataset arguments
 '''
 parser.add_argument('--w2v_dir', type=str, default='./data/base_w2v/wiki_all.sent.split.model',
                     help='location of the default node embedding')
@@ -29,7 +29,7 @@ parser.add_argument('--chimera_dir', type=str, default='./data/chimeras/',
 parser.add_argument('--cuda', type=int, default=-1,
                     help='Avaiable GPU ID')
 '''
-Model hyperparameters
+    Model hyperparameters
 '''
 parser.add_argument('--maxlen', type=int, default=12,
                     help='maxlen of context (half, left or right) and character')
@@ -50,7 +50,7 @@ parser.add_argument('--lr_init', type=float, default=1e-3,
 parser.add_argument('--n_shot', type=int, default=10,
                     help='upper bound of training K-shot')
 '''
-Validation & Test arguments
+    Validation & Test arguments
 '''
 parser.add_argument('--test_interval', type=int, default=1,
                     help='report interval')
@@ -67,7 +67,7 @@ parser.add_argument('--lr_early_stop', type=float, default=1e-5,
 
 
 '''
-Adaptation with First-Order MAML arguments
+    Adaptation with First-Order MAML arguments
 '''
 parser.add_argument('--adapt', action='store_true',
                     help='adapt to target dataset with 1-st order MAML')
@@ -96,6 +96,10 @@ def get_batch(words, dataset, w2v, batch_size, k_shot, device):
     return contexts, targets, vocabs
 
 def evaluate_on_chimera(model, chimera_data):
+    '''
+        Evaluate the model on Chimera datasets
+    '''
+    
     model.eval()
     with torch.no_grad():
         for k_shot in chimera_data:
@@ -117,6 +121,19 @@ def evaluate_on_chimera(model, chimera_data):
             print('-' * 100)
             print("Test with %d shot: Cosine: %.4f;  Spearman: %.4f" % (k_shot, cosine, np.average(cors)))    
 
+def replace_grad(parameter_gradients, parameter_name):
+    '''
+        Creates a backward hook function that replaces the calculated gradient
+        with a precomputed value when .backward() is called.
+
+        See
+        https://pytorch.org/docs/stable/autograd.html?highlight=hook#torch.Tensor.register_hook
+        for more info
+    '''
+    def replace_grad_(module):
+        return parameter_gradients[parameter_name]
+
+    return replace_grad_
 
 _vocab = {v: i+1 for v, i in zip('abcdefghijklmnopqrstuvwxyz', range(26))}
 base_w2v = Word2Vec.load(args.w2v_dir)
@@ -185,6 +202,7 @@ for epoch in np.arange(args.n_epochs) + 1:
     if epoch % args.test_interval == 0:
         '''
         # This script can plot loss curve and position attention weight for debugging.
+        
         plot_stat = pd.DataFrame(loss_stat, columns=['Epoch', 'Cosine', 'Data', 'K-shot'])
         print(model.bal)
         print(model.pos_att.pos_att)
@@ -199,7 +217,7 @@ for epoch in np.arange(args.n_epochs) + 1:
         print('Finish Training')
         break
 '''
-Evaluate on the best model:
+    Evaluate on the best model:
 '''
 model = torch.load(os.path.join(args.save_dir, 'model.pt')).to(device)
 print('=' * 100)
@@ -209,6 +227,9 @@ evaluate_on_chimera(model, chimera_data)
     
 if args.adapt:
     best_score = -1
+    '''
+        Use the other words that are not OOV in the target corpus for adapting the previous learned model into target domain.
+    '''
     target_train_dataset, target_valid_dataset, target_dictionary = load_training_corpus(base_w2v, args.chimera_dir, maxlen = args.maxlen,\
          freq_lbound = args.freq_lbound, freq_ubound = args.freq_ubound, cxt_lbound = args.cxt_lbound, dictionary = dictionary)
     target_train_words = list(target_train_dataset.keys())
@@ -219,8 +240,8 @@ if args.adapt:
     optimizer.zero_grad() 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=args.lr_decay, patience = args.patience, mode='max', threshold=args.threshold)
     '''
-    Use a temp model to calculate update on source task, then calculate the gradient with updated weights on target task. 
-    Finally pass the gradient to original model and conduct optimization (gradient descent)
+        Use a temp model to calculate update on source task, then calculate the gradient with updated weights on target task. 
+        Finally pass the gradient to original model and conduct optimization (gradient descent)
     '''
     model_tmp = copy.deepcopy(model)
     for meta_epoch in np.arange(args.n_epochs):
@@ -234,7 +255,7 @@ if args.adapt:
                 model_tmp.train()
                 optimizer_tmp = torch.optim.Adam(model_tmp.parameters(), lr = 5e-4)
                 '''
-                Cumulate Inner Gradient
+                    Cumulate Inner Gradient
                 '''
                 for inner_batch in range(args.inner_batch_size):
                     k_shot = np.random.randint(args.n_shot) + 1
@@ -257,7 +278,7 @@ if args.adapt:
             # end for meta_batch in tqdm:
         # end with tqdm(np.arange(args.meta_batch_size), desc='Meta Train') as monitor:
         '''
-        Meta-Update
+            Meta-Update
         '''
         meta_grads = {name: torch.stack([name_grad[name] for name_grad in meta_grads]).mean(dim=0)
                                       for name in meta_grads[0].keys()}
@@ -280,7 +301,7 @@ if args.adapt:
             h.remove()
             
         '''
-        Validate using either of the updated model_tmp (we use the last one for convenience)
+            Validate using either of the updated model_tmp (we use the last one for convenience)
         '''
         model_tmp.eval()
         with tqdm(np.arange(args.n_batch // args.n_shot), desc='Meta Valid') as monitor:

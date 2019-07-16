@@ -8,8 +8,24 @@ import numpy as np
 The code for transformer encoder is mostly modified from http://nlp.seas.harvard.edu/2018/04/03/attention.html
 '''
 
+class EncoderLayer(nn.Module):
+    '''
+        Transformer Encoder, which will be used for both context encoder and aggregator.
+    '''
+    def __init__(self, n_head, n_hid, att_dropout = 0.1, ffn_dropout = 0.1, res_dropout = 0.3):
+        super(EncoderLayer, self).__init__()
+        self.self_attn = MultiHeadedAttention(n_head, n_hid, att_dropout)
+        self.feed_forward = PositionwiseFeedForward(n_hid, ffn_dropout)
+        self.sublayer = nn.ModuleList([SublayerConnection(n_hid, res_dropout) for _ in range(2)])
+
+    def forward(self, x, mask):
+        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
+        return self.sublayer[1](x, self.feed_forward)
+
 class LayerNorm(nn.Module):
-    "Construct a layernorm module."
+    '''
+        Construct a layernorm module.
+    '''
     def __init__(self, features, eps=1e-6):
         super(LayerNorm, self).__init__()
         self.a_2 = nn.Parameter(torch.ones(features))
@@ -23,7 +39,10 @@ class LayerNorm(nn.Module):
 
 class MultiHeadedAttention(nn.Module):
     def __init__(self, n_head, n_hid, dropout=0.1):
-        "Take in model size and number of heads."
+        '''
+            Multihead self-attention that can calcualte mutual attention table
+            based on which to aggregate embedding at different position.
+        '''
         super(MultiHeadedAttention, self).__init__()
         self.d_k = n_hid // n_head
         self.h = n_head
@@ -61,7 +80,9 @@ class MultiHeadedAttention(nn.Module):
         return torch.matmul(p_attn, value), p_attn
     
 class PositionwiseFeedForward(nn.Module):
-    "Implements FFN equation."
+    '''
+        Implements FFN equation (1-D convolution).
+    '''
     def __init__(self, n_hid, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
         self.w_1 = nn.Linear(n_hid, n_hid * 2)
@@ -73,9 +94,9 @@ class PositionwiseFeedForward(nn.Module):
    
     
 class SublayerConnection(nn.Module):
-    """
-    A residual connection followed by a layer norm.
-    """
+    '''
+        A residual connection followed by a layer norm.
+    '''
     def __init__(self, size, dropout = 0.3):
         super(SublayerConnection, self).__init__()
         self.norm = LayerNorm(size)
@@ -84,28 +105,11 @@ class SublayerConnection(nn.Module):
     def forward(self, x, sublayer):
         "Apply residual connection to any sublayer with the same size."
         return self.norm(x + self.dropout(sublayer(x)))
-
-class EncoderLayer(nn.Module):
-    def __init__(self, n_head, n_hid, att_dropout = 0.1, ffn_dropout = 0.1, res_dropout = 0.3):
-        super(EncoderLayer, self).__init__()
-        self.self_attn = MultiHeadedAttention(n_head, n_hid, att_dropout)
-        self.feed_forward = PositionwiseFeedForward(n_hid, ffn_dropout)
-        self.sublayer = nn.ModuleList([SublayerConnection(n_hid, res_dropout) for _ in range(2)])
-
-    def forward(self, x, mask):
-        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
-        return self.sublayer[1](x, self.feed_forward)
-    
-class PositionalAttention(nn.Module):
-    def __init__(self, n_seq):
-        super(PositionalAttention, self).__init__()
-        self.pos_att = nn.Parameter(torch.ones(n_seq))
-    def forward(self, x):
-        # x: L * d -> d * L
-        return (x.transpose(-2, -1) * self.pos_att).transpose(-2, -1)
     
 class PositionalEncoding(nn.Module):
-    "Implement the PE function."
+    '''
+        Implement the Position Encoding (Sinusoid) function.
+    '''
     def __init__(self, n_hid, max_len = 1000, dropout = 0.3):
         super(PositionalEncoding, self).__init__()
         # Compute the positional encodings once in log space.
@@ -118,11 +122,24 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe)
     def forward(self, x):
         return x + Variable(self.pe[:, :, :x.shape[-2]], requires_grad=False)
-        
+
+class PositionalAttention(nn.Module):
+    '''
+        A simple positional attention layer that assigns different weights for word in different relative position.
+    '''
+    def __init__(self, n_seq):
+        super(PositionalAttention, self).__init__()
+        self.pos_att = nn.Parameter(torch.ones(n_seq))
+    def forward(self, x):
+        # x: L * d -> d * L
+        return (x.transpose(-2, -1) * self.pos_att).transpose(-2, -1)
+    
 class CharCNN(nn.Module):
+    '''
+        A simple implementation of CharCNN (Kim et al. https://arxiv.org/abs/1508.06615)
+    '''
     def __init__(self, n_hid, dropout = 0.3):
         super(CharCNN, self).__init__()
-        # Compute the positional encodings once in log space.
         self.char_emb = nn.Embedding(26+1, n_hid)
         self.filter_num_width = [2,4,6,8]
         self.convs    = nn.ModuleList(
@@ -140,6 +157,11 @@ class CharCNN(nn.Module):
         return self.norm(self.linear(conv_out))
     
 class HICE(nn.Module):
+    '''
+        The implementation of the HICE architecture. The lower level context encoder and upper level context aggegator are all
+        implemented by multilayer Transformer encoder. The morphological information is encoded by CharCNN, and added with the 
+        output of context aggregator with a gate determined only by context length. (Find useful to make the model generalized better)
+    '''
     def __init__(self, n_head, n_hid, n_seq, n_layer, use_morph, w2v, emb_tunable = False):
         super(HICE, self).__init__()
         self.n_hid   = n_hid
@@ -155,7 +177,7 @@ class HICE(nn.Module):
         if use_morph:
             self.char_cnn = CharCNN(n_hid)
         self.use_morph = use_morph
-        self.out     = nn.Linear(n_hid, n_hid)
+        self.out     = nn.Linear(n_hid, n_hid) # Can consider tie weights with input embedding.
         self.bal     = nn.Parameter(torch.ones(2) / 10.)
     def update_embedding(self, w2v, init = False):
         target_w2v = torch.FloatTensor(w2v)
@@ -172,14 +194,14 @@ class HICE(nn.Module):
         return torch.sigmoid(self.bal[0] * n_cxt + self.bal[1])
     def forward(self, contexts, vocabs = None, pad = 0):
         #  B (Batch Size) * K (number of contexts) * L (Length of each context) -> K * [B * L] ->
-        m = self.mask_pad(contexts, pad).transpose(0,1)
+        masks = self.mask_pad(contexts, pad).transpose(0,1)
         x = self.pos_enc(self.pos_att(self.emb(contexts))).transpose(0,1)
         res = []
-        for xi, mask in zip(x, m):
+        for xi, mask in zip(x, masks):
             for layer in self.context_encoder:
                 xi = layer(xi, mask)
-            fm = mask.squeeze().unsqueeze(-1).float()
-            res += [torch.sum(xi * fm, dim=1) / torch.sum(fm, dim=1)]
+            mask_value = mask.squeeze().unsqueeze(-1).float()
+            res += [torch.sum(xi * mask_value, dim=1) / torch.sum(mask_value, dim=1)]
         #  K * B * n_hid  -> B * K * n_hid
         res = torch.stack(res).transpose(0,1)
         for layer in self.context_aggegator:
