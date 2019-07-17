@@ -39,11 +39,11 @@ parser.add_argument('--n_head', type=int, default=10,
                     help='number of hidden units per layer')
 parser.add_argument('--n_layer', type=int, default=2,
                     help='number of encoding layers')
-parser.add_argument('--n_epochs', type=int, default=100,
+parser.add_argument('--n_epochs', type=int, default=200,
                     help='upper bound of training epochs')
 parser.add_argument('--n_batch', type=int, default=256, 
                     help='batch size')
-parser.add_argument('--batch_size', type=int, default=256,
+parser.add_argument('--batch_size', type=int, default=128,
                     help='batch size')
 parser.add_argument('--lr_init', type=float, default=1e-3,
                     help='initial learning rate for Adam')
@@ -204,8 +204,8 @@ for epoch in np.arange(args.n_epochs) + 1:
     loss_stat += [[epoch, li, 'TRAIN', k_shot] for (li, k_shot) in train_cosine]
     loss_stat += [[epoch, li, 'VALID', k_shot] for (li, k_shot) in valid_cosine]
     if epoch % args.test_interval == 0:
-    '''
-        # This script can plot loss curve and position attention weight for debugging.
+        '''
+            #This script can plot loss curve and position attention weight for debugging.
         
         plot_stat = pd.DataFrame(loss_stat, columns=['Epoch', 'Cosine', 'Data', 'K-shot'])
         print(model.bal)
@@ -215,7 +215,7 @@ for epoch in np.arange(args.n_epochs) + 1:
             sb.lineplot(x='Epoch', y='Cosine', hue='Data', data = data)
             plt.title('K-shot = ' + str(k))
             plt.savefig(args.save_dir + 'training_curve_%d.png' % k)
-    '''
+        '''
         evaluate_on_chimera(model, chimera_data)
     if optimizer.param_groups[0]['lr'] < args.lr_early_stop:
         print('Finish Training')
@@ -349,10 +349,8 @@ if args.adapt:
             print('Finish Training')
             break
     # end for meta_epoch in np.arange(args.n_epochs):
+    model = torch.load(os.path.join(args.save_dir, 'meta_model.pt')).to(device)
+    print('=' * 100)
+    print('Evaluate on the best model with meta training on both source and target corpus:')
+    evaluate_on_chimera(model, chimera_data)
 # end if args.adapt:
-
-
-model = torch.load(os.path.join(args.save_dir, 'meta_model.pt')).to(device)
-print('=' * 100)
-print('Evaluate on the best model with meta training on both source and target corpus:')
-evaluate_on_chimera(model, chimera_data)
