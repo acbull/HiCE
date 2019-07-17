@@ -59,9 +59,9 @@ parser.add_argument('--save_dir', type=str, default='./save/',
 parser.add_argument('--lr_decay', type=float, default=0.5,
                     help='Learning Rate Decay using ReduceLROnPlateau Scheduler')
 parser.add_argument('--threshold', type=float, default=1e-3,
-                    help='threshold for ReduceLROnPlateau Scheduler')
+                    help='threshold for ReduceLROnPlateau Scheduler judgement')
 parser.add_argument('--patience', type=int, default=4,
-                    help='Patience for lr Scheduler judgement')
+                    help='Patience for ReduceLROnPlateau Scheduler judgement')
 parser.add_argument('--lr_early_stop', type=float, default=1e-5,
                     help='the lower bound of training lr. Early stop after lr is below it.')
 
