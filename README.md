@@ -1,6 +1,6 @@
 ## Overview
 
-HiCE (Hierarchical Context Encoding) is a model for learning accurate embedding of an OOV word with few occurrences. 
+HiCE (Hierarchical Context Encoding) is a model for learning accurate embedding of an OOV word with few occurrences. This repository is a pytorch implementation of HICE.
 
 The basic idea is to train the model on a large scale dataset, masking some words out and use limited contexts to estimate their ground-truth embedding. The learned model can then be served to estimate OOV words in a new corpus. The model can be furthered improved by adapting to the new corpus with 1-st order MAML.
 
