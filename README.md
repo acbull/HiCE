@@ -16,7 +16,7 @@ This implementation is based on Pytorch We assume that you're using Python 3 wit
 
 For fair comparison with earlier works, we utilize the same word embedding provided by [Herbelot & Baroni, 2017](https://drive.google.com/open?id=1Np4J0q_ZIYr74IIdLGlAgzwwx00KJJeE), which is a 259,376 word2vec embedding pre-trained on Wikipedia. After downloading it, unzip and put it into '/data/' directory.
 
-To fit this word embedding, we use WikiText-103 as source corpus to train our model. Download [WikiText-103] (https://drive.google.com/open?id=1Spu89EmhxKYJiyDVHfRa_P6aFoA-FuCd), unzip and put it into the '/data/' directory. 
+To fit this word embedding, we use WikiText-103 as source corpus to train our model. Download [WikiText-103](https://drive.google.com/open?id=1Spu89EmhxKYJiyDVHfRa_P6aFoA-FuCd), unzip and put it into the '/data/' directory. 
 
 Then execute the script:
 
