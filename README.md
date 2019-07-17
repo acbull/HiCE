@@ -14,7 +14,11 @@ This implementation is based on Pytorch We assume that you're using Python 3 wit
 - [sklearn](https://github.com/scikit-learn/scikit-learn)
 - [tqdm](https://github.com/tqdm/tqdm)
 
-Download WikiText-103 data from [HERE](https://drive.google.com/open?id=1h72movVxn6jbx_o-aJEniksZLdqYB_GF) and put it into the '/data/' directory. Then execute the script:
+For fair comparison with earlier works, we utilize the same word embedding provided by [Herbelot & Baroni, 2017](http://clic.cimec.unitn.it/~aurelie.herbelot/wiki_all.model.tar.gz), which is a 259,376 word2vec embedding pre-trained on Wikipedia. After downloading it, unzip and put into '/data/' directory.
+
+To fit this word embedding, we use WikiText-103 as source corpus to train our model. Download WikiText-103 data from [HERE](https://drive.google.com/open?id=1h72movVxn6jbx_o-aJEniksZLdqYB_GF) and put it into the '/data/' directory. 
+
+Then execute the script:
 
 ```bash
 python3 train.py --cuda 0 --use_morph --adapt  # Train HiCE with morphology feature and use MAML for adaptation
@@ -24,7 +28,7 @@ python3 train.py --cuda 0                      # Train HiCE with context only wi
 ```
 There's also other hyperparameters to be tuned, which can be found in 'train.py' for details.
 
-The model will parse the training corpus in a way that some words are selected as OOV words, with some context sentences as features and ground-truth embedding as the label. Then for each batch, the model will randomly select some words with K context sentences to estimate the ground-truth embedding. The model will be evaluated on ['Chimera dataset' (Lazaridou et al, 2017)](https://www.ncbi.nlm.nih.gov/pubmed/28323353). 
+The model will parse the training corpus in a way that some words are selected as OOV words, with some context sentences as features and ground-truth embedding as the label. For each batch, the model will randomly select some words with K context sentences to estimate the ground-truth embedding. The model will be evaluated on ['Chimera dataset' (Lazaridou et al, 2017)](https://www.ncbi.nlm.nih.gov/pubmed/28323353). 
 
 After finish training, the model can further be adapted to the target corpus with 1-st order MAML. We also use the known words in the target corpus as OOV words and construct a target dataset. Then we use the better initialization get from source dataset to calculate the gradient on target dataset. Noted that this is not equivalent to the original definition of MAML(Model-Agnostic Meta-Learning), where there exist multiple tasks. If one can get access to multiple datasets in different domains, the model can also be trained in the original paper's style.
 
