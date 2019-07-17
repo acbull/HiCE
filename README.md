@@ -2,7 +2,7 @@
 
 HiCE (Hierarchical Context Encoding) is a model for learning accurate embedding of an OOV word with few occurrences. This repository is a pytorch implementation of HICE.
 
-The basic idea is to train the model on a large scale dataset, masking some words out and use limited contexts to estimate their ground-truth embedding. The learned model can then be served to estimate OOV words in a new corpus. The model can be furthered improved by adapting to the new corpus with 1-st order MAML.
+The basic idea is to train the model on a large scale dataset, masking some words out and use limited contexts to estimate their ground-truth embedding. The learned model can then be served to estimate OOV words in a new corpus. The model can be furthered improved by adapting to the new corpus with first order MAML.
 
 You can see our ACL 2019 paper [“**Few-Shot Representation Learning for Out-Of-Vocabulary Words**”](https://arxiv.org/abs/1907.00505) for more details.
 
@@ -31,7 +31,7 @@ There's also other hyperparameters to be tuned, which can be found in 'train.py'
 
 The model will parse the training corpus in a way that some words (which frequency is not too high or too low) are selected as OOV words, with the sentences containing these words as features and ground-truth embedding as the label. For each batch, the model will randomly select some words with K context sentences to estimate the ground-truth embedding. The model will be evaluated on ['Chimera dataset' (Lazaridou et al, 2017)](https://www.ncbi.nlm.nih.gov/pubmed/28323353). 
 
-After finish training, the model can further be adapted to the target corpus with 1-st order MAML. We also use the known words in the target corpus as OOV words and construct a target dataset. Then we use the better initialization get from source dataset to calculate the gradient on target dataset. Noted that this is not equivalent to the original definition of MAML (Model-Agnostic Meta-Learning), where there exist multiple tasks. If one can get access to multiple datasets in different domains, the model can also be trained in the original paper's style.
+After finish training, the model can further be adapted to the target corpus with first order MAML. We also use the known words in the target corpus as OOV words and construct a target dataset. Then we use the better initialization get from source dataset to calculate the gradient on target dataset. Noted that this is not equivalent to the original definition of MAML (Model-Agnostic Meta-Learning), where there exist multiple tasks. If one can get access to multiple datasets in different domains, the model can also be trained in the original paper's style.
 
 The trained model will be saved in a given directory (default in '/save' directory), which can be adopted to handle OOV in other downstream tasks.
 
