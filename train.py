@@ -349,6 +349,9 @@ if args.adapt:
             print('Finish Training')
             break
     # end for meta_epoch in np.arange(args.n_epochs):
+    '''
+        Evaluate on the best meta model:
+    '''
     model = torch.load(os.path.join(args.save_dir, 'meta_model.pt')).to(device)
     print('=' * 100)
     print('Evaluate on the best model with meta training on both source and target corpus:')
