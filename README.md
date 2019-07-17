@@ -33,6 +33,7 @@ The model will parse the training corpus in a way that some words (which frequen
 
 After finish training, the model can further be adapted to the target corpus with 1-st order MAML. We also use the known words in the target corpus as OOV words and construct a target dataset. Then we use the better initialization get from source dataset to calculate the gradient on target dataset. Noted that this is not equivalent to the original definition of MAML (Model-Agnostic Meta-Learning), where there exist multiple tasks. If one can get access to multiple datasets in different domains, the model can also be trained in the original paper's style.
 
+The trained model will be saved in a given directory (default in '/save' directory), which can be adopted in other downstream tasks.
 
 ### Citation
 
