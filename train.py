@@ -290,8 +290,8 @@ if args.adapt:
         '''
             Meta-Update with the average of meta gradients: \theta' = \theta - \beta \nabla_\theta \mathcal{L}_{D_N}(\theta^*)
             Use replace_grad function as a hook to assign the gradients. Such operation will omit the second-order gradient, 
-            but some experiments show that this tradeoff will not sacrifice too much performance while gaining good efficiency.
-            (Also writing functional interface for a complex Transformer is very complicated).
+            Nichol et al. (https://arxiv.org/abs/1803.02999) shows that this first-order cutoff will not sacrifice too much 
+            performance while gaining good training efficiency.
         '''
         meta_grads = {name: torch.stack([name_grad[name] for name_grad in meta_grads]).mean(dim=0)
                                       for name in meta_grads[0].keys()}
