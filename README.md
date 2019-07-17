@@ -18,7 +18,8 @@ For fair comparison with earlier works, we utilize the same word embedding provi
 
 To fit this word embedding, we use WikiText-103 as source corpus to train our model. Download [WikiText-103](https://drive.google.com/open?id=1Spu89EmhxKYJiyDVHfRa_P6aFoA-FuCd), unzip and put it into the '/data/' directory. 
 
-Then execute the script:
+## Usage
+Execute the following scripts to train and evaluate the model:
 
 ```bash
 python3 train.py --cuda 0 --use_morph --adapt  # Train HiCE with morphology feature and use MAML for adaptation
