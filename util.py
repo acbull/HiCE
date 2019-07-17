@@ -223,6 +223,21 @@ def load_chimera(dictionary, base_w2v, chimera_dir, maxlen = 12, pad = 0):
             cos = cosine_similarity([p1], p2)
             cor = spearmanr(cos[0], p3)[0]
             cors += [cor]
-        r2 = np.average(cors)
-        print(r2)
+        print(np.average(cors))
+     
+    print('--------------')
+    print('Upper Bound: Ground Truth Embedding')
+    for k in [2, 4, 6]:
+        data = chimera_data[k]
+        oov_prb = np.array(list(data["probes"]))
+        oov_scr = np.array(list(data["scores"]))
+        prov = [[base_w2v.wv[pi] for pi in probe] for probe in oov_prb]
+        pred = chimera_data[k]['ground_truth_vector']
+        cors = []
+        for p1, p2, p3 in zip(pred, prov, oov_scr):
+            cos = cosine_similarity([p1], p2)
+            cor = spearmanr(cos[0], p3)[0]
+            cors += [cor]
+        print(np.average(cors))
+        
     return chimera_data
