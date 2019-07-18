@@ -206,7 +206,7 @@ class HICE(nn.Module):
         res = torch.stack(res).transpose(0,1)
         for layer in self.context_aggegator:
             res = layer(res, None)
-        if self.use_morph:
+        if self.use_morph and vocabs != None:
             cxt_weight = self.get_bal(contexts.shape[1])
             res = cxt_weight * res.mean(dim=1) + (1 - cxt_weight) * self.char_cnn(vocabs)
         else:
