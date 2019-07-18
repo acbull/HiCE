@@ -12,7 +12,7 @@ class EncoderLayer(nn.Module):
     '''
         Transformer Encoder, which will be used for both context encoder and aggregator.
     '''
-    def __init__(self, n_head, n_hid, att_dropout = 0.1, ffn_dropout = 0.1, res_dropout = 0.3):
+    def __init__(self, n_head, n_hid, att_dropout = 0.3, ffn_dropout = 0.3, res_dropout = 0.5):
         super(EncoderLayer, self).__init__()
         self.self_attn = MultiHeadedAttention(n_head, n_hid, att_dropout)
         self.feed_forward = PositionwiseFeedForward(n_hid, ffn_dropout)
