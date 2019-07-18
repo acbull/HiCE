@@ -112,6 +112,7 @@ class PositionalEncoding(nn.Module):
     '''
     def __init__(self, n_hid, max_len = 1000, dropout = 0.3):
         super(PositionalEncoding, self).__init__()
+        self.dropout = nn.Dropout(dropout)
         # Compute the positional encodings once in log space.
         pe = torch.zeros(max_len, n_hid)
         position = torch.arange(0., max_len).unsqueeze(1)
@@ -121,7 +122,7 @@ class PositionalEncoding(nn.Module):
         pe = pe.unsqueeze(0).unsqueeze(0) / np.sqrt(n_hid)
         self.register_buffer('pe', pe)
     def forward(self, x):
-        return x + Variable(self.pe[:, :, :x.shape[-2]], requires_grad=False)
+        return self.dropout(x + Variable(self.pe[:, :, :x.shape[-2]], requires_grad=False))
 
 class PositionalAttention(nn.Module):
     '''
