@@ -12,7 +12,7 @@ class EncoderLayer(nn.Module):
     '''
         Transformer Encoder, which will be used for both context encoder and aggregator.
     '''
-    def __init__(self, n_head, n_hid, att_dropout = 0.3, ffn_dropout = 0.3, res_dropout = 0.5):
+    def __init__(self, n_head, n_hid, att_dropout = 0.1, ffn_dropout = 0.1, res_dropout = 0.3):
         super(EncoderLayer, self).__init__()
         self.self_attn = MultiHeadedAttention(n_head, n_hid, att_dropout)
         self.feed_forward = PositionwiseFeedForward(n_hid, ffn_dropout)
@@ -38,7 +38,7 @@ class LayerNorm(nn.Module):
         return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, n_head, n_hid, dropout=0.1):
+    def __init__(self, n_head, n_hid, dropout=0.3):
         '''
             Multihead self-attention that can calcualte mutual attention table
             based on which to aggregate embedding at different position.
@@ -110,7 +110,7 @@ class PositionalEncoding(nn.Module):
     '''
         Implement the Position Encoding (Sinusoid) function.
     '''
-    def __init__(self, n_hid, max_len = 1000, dropout = 0.3):
+    def __init__(self, n_hid, max_len = 1000, dropout = 0.1):
         super(PositionalEncoding, self).__init__()
         self.dropout = nn.Dropout(dropout)
         # Compute the positional encodings once in log space.
