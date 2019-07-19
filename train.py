@@ -337,7 +337,7 @@ if args.adapt:
         avg_train, avg_valid = np.average(source_cosine), np.average(target_cosine)
         print(("Epoch: %d: Meta Train Cosine: %.4f; Meta Valid Cosine: %.4f; LR: %f") \
             % (meta_epoch, avg_train, avg_valid, optimizer.param_groups[0]['lr']))
-        score = avg_train + avg_valid
+        score = avg_train + avg_valid * 2
         scheduler.step(score)
         if score > best_score:
             best_score = score
