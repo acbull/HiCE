@@ -43,7 +43,7 @@ Please consider citing the following paper when using our code for your applicat
 @inproceedings{hice2019,
   title={Few-Shot Representation Learning for Out-Of-Vocabulary Words},
   author={Ziniu Hu and Ting Chen and Kai-Wei Chang and Yizhou Sun},
-  booktitle={Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, ACL 2019},
+  booktitle={Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, ACL},
   year={2019}
 }
 ```
